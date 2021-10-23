@@ -4,44 +4,45 @@
 #include <string.h>
 #include <stdio.h>
 
-void initFlagParser(int argc, char *argv[]);
-void parseInt(int * out, char * name, int def_val, char * help_str);
+void parseInt(int *value, char * name, int default_value, char * help_str);
+void parseFlags(int argc, char *argv[]);
 
 typedef struct {
-    int argc;
-    char **argv;
-} FlagArgs;
-
-typedef struct {
-    int *out;
+    int *value;
+    int default_value;
     char *name;
     char *help_str;
 } IntFlag;
 
-FlagArgs flagArgs;
 IntFlag *iflags = NULL;
 size_t   iflagsc = 0;
 
-void initFlagParser(int argc, char *argv[])
-{
-    flagArgs.argc = argc;
-    flagArgs.argv = argv;
-}
-
-void parseInt(int *out, char *name, int def_val, char * help_str)
+void parseInt(int *value, char *name, int default_value, char *help_str)
 {
     IntFlag int_flag;
-    int_flag.out = out;
+    int_flag.value = value;
+    int_flag.default_value = default_value;
     int_flag.name = name;
     int_flag.help_str = help_str;
-    *out = def_val;
+    *value = default_value;
 
     iflagsc++;
     iflags = (IntFlag *)realloc(iflags, sizeof(IntFlag) * iflagsc);
     iflags[iflagsc - 1] = int_flag;
 }
 
-void parseFlags()
+void printUsage(char *filename)
+{
+    fprintf(stdout, "%s [args]\n", filename);
+    for (size_t j = 0; j < iflagsc; j++)
+        fprintf(stdout, "\t%s\t%s (default: %i)\n", 
+            iflags[j].name, 
+            iflags[j].help_str, 
+            *iflags[j].value
+        );
+}
+
+void parseFlags(int argc, char *argv[])
 {
     if (iflags == NULL || iflagsc == 0)
     {
@@ -50,10 +51,16 @@ void parseFlags()
         exit(1);
     }
 
-    /* Parse all flags */
-    for (int i = 1; i < flagArgs.argc; i++)
+    if (argc == 1)
     {
-        char *arg = flagArgs.argv[i];
+        printUsage(argv[0]);
+        exit(1);
+    }
+
+    /* Parse all flags */
+    for (int i = 1; i < argc; i++)
+    {
+        char *arg = argv[i];
         
         if (arg[0] != '-')
             continue; /* not a flag */
@@ -65,8 +72,8 @@ void parseFlags()
 
             // Retrieve the next arg and use as value
             i++;
-            if (i < flagArgs.argc) /* convert str to int */
-                *iflags[j].out = atoi(flagArgs.argv[i]);
+            if (i < argc) /* convert str to int */
+                *iflags[j].value = atoi(argv[i]);
             else
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
         }
