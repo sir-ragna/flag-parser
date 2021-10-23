@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 void parseInt(int *value, char *name, int default_value, char *help_str);
+void parseStr(char **value, char *name, char *default_value, char *help_str);
 void parseFlags(int argc, char *argv[]);
 
 typedef struct {
@@ -49,17 +50,31 @@ void parseStr(char **value, char *name, char *default_value, char *help_str)
     str_flag.name = (char *)malloc(strlen(name) + 1);
     strcpy(str_flag.name, name);
     
-    int default_val_len = strlen(default_value);
+    if (default_value == NULL) 
+    {
+        *str_flag.value = NULL;
+        str_flag.default_value = NULL;
+    }
+    else
+    {
+        int default_val_len = strlen(default_value);
 
-    *value = (char *)malloc(default_val_len + 1);
-    strcpy(*value, default_value);
-    
-    str_flag.default_value = (char *)malloc(default_val_len + 1);
-    strcpy(str_flag.default_value, default_value);
+        *value = (char *)malloc(default_val_len + 1);
+        strcpy(*value, default_value);
+        
+        str_flag.default_value = (char *)malloc(default_val_len + 1);
+        strcpy(str_flag.default_value, default_value);
+    }
 
-    int hslen = strlen(help_str);
-    str_flag.help_str = (char *)malloc(strlen(help_str) + 1);
-    strcpy(str_flag.help_str, help_str);
+    if (help_str == NULL)
+    {
+        str_flag.help_str = NULL;
+    }
+    else
+    {
+        str_flag.help_str = (char *)malloc(strlen(help_str) + 1);
+        strcpy(str_flag.help_str, help_str);
+    }
     
     sflagsc++;
     sflags = (StrFlag *)realloc(sflags, sizeof(StrFlag) * sflagsc);
@@ -69,14 +84,28 @@ void parseStr(char **value, char *name, char *default_value, char *help_str)
 void printUsage(char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
-    for (size_t j = 0; j < iflagsc; j++)
+    for (size_t i = 0; i < iflagsc; i++)
     {
         fprintf(stdout, "\t%s\t%s (default: %i)\n", 
-            iflags[j].name, 
-            iflags[j].help_str, 
-            *iflags[j].value
+            iflags[i].name, 
+            iflags[i].help_str, 
+            iflags[i].default_value
         );
     }
+    for (size_t i = 0; i < sflagsc; i++)
+    {
+        if (sflags[i].default_value == NULL)
+            fprintf(stdout, "\t%s\t%s (default: NULL)\n", 
+                sflags[i].name, 
+                sflags[i].help_str);    
+        else
+            fprintf(stdout, "\t%s\t%s (default: \"%s\")\n", 
+                sflags[i].name, 
+                sflags[i].help_str, 
+                sflags[i].default_value
+            );
+    }
+
 }
 
 void parseFlags(int argc, char *argv[])
@@ -102,6 +131,7 @@ void parseFlags(int argc, char *argv[])
         if (arg[0] != '-')
             continue; /* not a flag */
         
+        /* Parse int flags */
         for (size_t j = 0; j < iflagsc; j++)
         {
             if (strcmp(iflags[j].name, arg) != 0)
@@ -112,6 +142,28 @@ void parseFlags(int argc, char *argv[])
             if (i < argc) 
             {   /* convert str to int */
                 *iflags[j].value = atoi(argv[i]);
+            }
+            else
+            {
+                fprintf(stderr, "No value found for \"%s\"\n", arg);
+                printUsage(argv[0]);
+                exit(2);
+            }
+        }
+
+        /* Parse str flags */
+        for (size_t j = 0; j < sflagsc; j++)
+        {
+            if (strcmp(sflags[j].name, arg) != 0)
+                continue;
+
+            // Retrieve the next arg and use as value
+            i++;
+            if (i < argc) 
+            {   
+                int arg_len = strlen(argv[i]);
+                *sflags[j].value = (char *)malloc(arg_len + 1);
+                strcpy(*sflags[j].value, argv[i]);
             }
             else
             {
