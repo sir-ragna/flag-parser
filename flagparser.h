@@ -17,6 +17,16 @@ typedef struct {
 IntFlag *iflags = NULL;
 size_t   iflagsc = 0;
 
+typedef struct {
+    char **value;
+    char *default_value;
+    char *name;
+    char *help_str;
+} StrFlag;
+
+StrFlag *sflags = NULL;
+size_t   sflagsc = 0;
+
 void parseInt(int *value, char *name, int default_value, char *help_str)
 {
     IntFlag int_flag;
@@ -29,6 +39,31 @@ void parseInt(int *value, char *name, int default_value, char *help_str)
     iflagsc++;
     iflags = (IntFlag *)realloc(iflags, sizeof(IntFlag) * iflagsc);
     iflags[iflagsc - 1] = int_flag;
+}
+
+void parseStr(char **value, char *name, char *default_value, char *help_str)
+{
+    StrFlag str_flag;
+    str_flag.value = value;
+
+    str_flag.name = (char *)malloc(strlen(name) + 1);
+    strcpy(str_flag.name, name);
+    
+    int default_val_len = strlen(default_value);
+
+    *value = (char *)malloc(default_val_len + 1);
+    strcpy(*value, default_value);
+    
+    str_flag.default_value = (char *)malloc(default_val_len + 1);
+    strcpy(str_flag.default_value, default_value);
+
+    int hslen = strlen(help_str);
+    str_flag.help_str = (char *)malloc(strlen(help_str) + 1);
+    strcpy(str_flag.help_str, help_str);
+    
+    sflagsc++;
+    sflags = (StrFlag *)realloc(sflags, sizeof(StrFlag) * sflagsc);
+    sflags[sflagsc - 1] = str_flag;
 }
 
 void printUsage(char *filename)
