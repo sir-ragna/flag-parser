@@ -4,11 +4,13 @@ TARGET = example
 
 all: $(TARGET)
 
+test: $(TARGET).c
+	g++ -Wall -std=gnu++17 -o $(TARGET) $(TARGET).c
+	gcc -Wall -std=c89     -o $(TARGET) $(TARGET).c
+	./example -n 999 -z Hallo -a xzy
+
 debug: $(TARGET).c
 	$(CC) -g -Wall -o $(TARGET) $(TARGET).c
-
-perf: $(TARGET).c
-	$(CC) -pg -g -Wall -o $(TARGET) $(TARGET).c
 
 release: $(TARGET).c
 	$(CC) -O2 -Wall -o $(TARGET) $(TARGET).c
