@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
-void gflg_int_var(int *value, char *name, int default_value, char *help_str);
-void gflg_str_var(char **value, char *name, char *default_value, char *help_str);
-void _gflg_print_usage(char *filename);
-void gflg_parse_flags(int argc, char *argv[]);
+void gflg_int_var(int *value, const char *name, int default_value, const char *help_str);
+void gflg_str_var(char **value, const char *name, const char *default_value, const char *help_str);
+void _gflg_print_usage(const char *filename);
+void gflg_parse_flags(const int argc, const char *argv[]);
 
 typedef struct {
     int *value;
@@ -31,7 +32,6 @@ size_t         sflagsc = 0;
 
 typedef struct {
     bool *value;
-    bool default_value;
     char *name;
     char *help_str;
 } gflg_bool_flag;
@@ -39,12 +39,30 @@ typedef struct {
 gflg_bool_flag *bflags = NULL;
 size_t          bflagsc = 0;
 
-void gflg_int_var(int *value, char *name, int default_value, char *help_str)
+/* Boolean flags are always false by default */
+void gflg_bool_var(bool *value, char *name, const char *help_str)
+{
+    gflg_bool_flag bool_flag;
+    bool_flag.name = name;
+    bool_flag.value = value;
+    *value = false;
+
+    bflagsc++;
+    bflags = (gflg_bool_flag *)realloc(bflags, sizeof(gflg_bool_flag) * bflagsc);
+    bflags[bflagsc - 1] = bool_flag;
+}
+
+void gflg_int_var(int *value, const char *name, int default_value, const char *help_str)
 {
     gflg_int_flag int_flag;
-    int_flag.name = name;
+    
+    int_flag.name = (char *)malloc(strlen(name) + 1);
+    strcpy(int_flag.name, name);
+
+    int_flag.help_str = (char *)malloc(strlen(help_str) + 1);
+    strcpy(int_flag.help_str, help_str);
+
     int_flag.value = value;
-    int_flag.help_str = help_str;
     int_flag.default_value = default_value;
     *value = default_value;
 
@@ -53,7 +71,7 @@ void gflg_int_var(int *value, char *name, int default_value, char *help_str)
     iflags[iflagsc - 1] = int_flag;
 }
 
-void gflg_str_var(char **value, char *name, char *default_value, char *help_str)
+void gflg_str_var(char **value, const char *name, const char *default_value, const char *help_str)
 {
     gflg_str_flag str_flag;
     str_flag.value = value;
@@ -92,7 +110,7 @@ void gflg_str_var(char **value, char *name, char *default_value, char *help_str)
     sflags[sflagsc - 1] = str_flag;
 }
 
-void _gflg_print_usage(char *filename)
+void _gflg_print_usage(const char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     size_t i;
@@ -120,7 +138,7 @@ void _gflg_print_usage(char *filename)
 
 }
 
-void gflg_parse_flags(int argc, char *argv[])
+void gflg_parse_flags(const int argc, const char *argv[])
 {
     if ((iflags == NULL || iflagsc == 0) && 
         (sflags == NULL || sflagsc == 0))
@@ -137,10 +155,10 @@ void gflg_parse_flags(int argc, char *argv[])
     }
 
     /* Parse all flags */
-    int i = 1;
-    for (; i < argc; i++)
+    size_t i = 1;
+    for (; i < (size_t)argc; i++)
     {
-        char *arg = argv[i];
+        const char *arg = argv[i];
         
         if (arg[0] != '-')
             continue; /* not a flag */
@@ -153,7 +171,7 @@ void gflg_parse_flags(int argc, char *argv[])
                 continue;
 
             i++; /* retrieve the next arg */
-            if (i < argc) 
+            if (i < (size_t)argc) 
             {   /* convert str to int */
                 *iflags[j].value = atoi(argv[i]);
             }
@@ -172,7 +190,7 @@ void gflg_parse_flags(int argc, char *argv[])
                 continue;
 
             i++; /* Retrieve the next argument */
-            if (i < argc) 
+            if (i < (size_t)argc) 
             {   
                 int arg_len = strlen(argv[i]);
                 *sflags[j].value = (char *)malloc(arg_len + 1);
