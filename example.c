@@ -15,8 +15,7 @@ int main(int argc, char *argv[])
     parseInt(&amount, "-n", 10, "Amount of iterations");
     parseInt(&runners, "-r", 5, "Runners to start");
     parseFlags(argc, argv);
-    //parseFlags(argc, argv); /* not supposed to be done */
-
+    
     printf("Test %s\n", test);
     printf("Abc %s\n", abc);
     printf("Target %s\n", target);

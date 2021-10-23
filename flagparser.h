@@ -85,7 +85,8 @@ void parseStr(char **value, char *name, char *default_value, char *help_str)
 void _printUsage(char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
-    for (size_t i = 0; i < iflagsc; i++)
+    size_t i;
+    for (i = 0; i < iflagsc; i++)
     {
         fprintf(stdout, "\t%s\t%s (default: %i)\n", 
             iflags[i].name, 
@@ -93,7 +94,7 @@ void _printUsage(char *filename)
             iflags[i].default_value
         );
     }
-    for (size_t i = 0; i < sflagsc; i++)
+    for (i = 0; i < sflagsc; i++)
     {
         if (sflags[i].default_value == NULL)
             fprintf(stdout, "\t%s\t%s (default: NULL)\n", 
@@ -115,9 +116,7 @@ void parseFlags(int argc, char *argv[])
         (sflags == NULL || sflagsc == 0))
     {
         fprintf(stderr, "No flags to parse.\n");
-        fprintf(stderr, "Either no flags were defined or parseFlags\n");
-        fprintf(stderr, "was called twice.\n");
-        /* maybe someone called parseFlags() twice? */
+        fprintf(stderr, "Did you call parseFlags twice?\n");
         exit(1);
     }
 
@@ -128,7 +127,8 @@ void parseFlags(int argc, char *argv[])
     }
 
     /* Parse all flags */
-    for (int i = 1; i < argc; i++)
+    int i = 1;
+    for (; i < argc; i++)
     {
         char *arg = argv[i];
         
@@ -136,13 +136,13 @@ void parseFlags(int argc, char *argv[])
             continue; /* not a flag */
         
         /* Parse int flags */
-        for (size_t j = 0; j < iflagsc; j++)
+        size_t j;
+        for (j = 0; j < iflagsc; j++)
         {
             if (strcmp(iflags[j].name, arg) != 0)
                 continue;
 
-            // Retrieve the next arg and use as value
-            i++;
+            i++; /* retrieve the next arg */
             if (i < argc) 
             {   /* convert str to int */
                 *iflags[j].value = atoi(argv[i]);
@@ -156,13 +156,12 @@ void parseFlags(int argc, char *argv[])
         }
 
         /* Parse str flags */
-        for (size_t j = 0; j < sflagsc; j++)
+        for (j = 0; j < sflagsc; j++)
         {
             if (strcmp(sflags[j].name, arg) != 0)
                 continue;
 
-            // Retrieve the next arg and use as value
-            i++;
+            i++; /* Retrieve the next argument */
             if (i < argc) 
             {   
                 int arg_len = strlen(argv[i]);
@@ -187,7 +186,7 @@ void parseFlags(int argc, char *argv[])
     }
     iflagsc = 0;
 
-    for (size_t i = 0; i < sflagsc; i++)
+    for (i = 0; i < sflagsc; i++)
     {
         if (sflags[i].default_value != NULL)
             free(sflags[i].default_value);
