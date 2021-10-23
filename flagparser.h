@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-void parseInt(int *value, char * name, int default_value, char * help_str);
+void parseInt(int *value, char *name, int default_value, char *help_str);
 void parseFlags(int argc, char *argv[]);
 
 typedef struct {
@@ -20,10 +20,10 @@ size_t   iflagsc = 0;
 void parseInt(int *value, char *name, int default_value, char *help_str)
 {
     IntFlag int_flag;
-    int_flag.value = value;
-    int_flag.default_value = default_value;
     int_flag.name = name;
+    int_flag.value = value;
     int_flag.help_str = help_str;
+    int_flag.default_value = default_value;
     *value = default_value;
 
     iflagsc++;
@@ -35,11 +35,13 @@ void printUsage(char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     for (size_t j = 0; j < iflagsc; j++)
+    {
         fprintf(stdout, "\t%s\t%s (default: %i)\n", 
             iflags[j].name, 
             iflags[j].help_str, 
             *iflags[j].value
         );
+    }
 }
 
 void parseFlags(int argc, char *argv[])
@@ -72,10 +74,16 @@ void parseFlags(int argc, char *argv[])
 
             // Retrieve the next arg and use as value
             i++;
-            if (i < argc) /* convert str to int */
+            if (i < argc) 
+            {   /* convert str to int */
                 *iflags[j].value = atoi(argv[i]);
+            }
             else
+            {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
+                printUsage(argv[0]);
+                exit(2);
+            }
         }
     }
 
