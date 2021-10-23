@@ -4,34 +4,44 @@
 #include <string.h>
 #include <stdio.h>
 
-void parseInt(int *value, char *name, int default_value, char *help_str);
-void parseStr(char **value, char *name, char *default_value, char *help_str);
-void _printUsage(char *filename);
-void parseFlags(int argc, char *argv[]);
+void gflg_int_var(int *value, char *name, int default_value, char *help_str);
+void gflg_str_var(char **value, char *name, char *default_value, char *help_str);
+void _gflg_print_usage(char *filename);
+void gflg_parse_flags(int argc, char *argv[]);
 
 typedef struct {
     int *value;
     int default_value;
     char *name;
     char *help_str;
-} IntFlag;
+} gflg_int_flag;
 
-IntFlag *iflags = NULL;
-size_t   iflagsc = 0;
+gflg_int_flag *iflags = NULL;
+size_t         iflagsc = 0;
 
 typedef struct {
     char **value;
     char *default_value;
     char *name;
     char *help_str;
-} StrFlag;
+} gflg_str_flag;
 
-StrFlag *sflags = NULL;
-size_t   sflagsc = 0;
+gflg_str_flag *sflags = NULL;
+size_t         sflagsc = 0;
 
-void parseInt(int *value, char *name, int default_value, char *help_str)
+typedef struct {
+    bool *value;
+    bool default_value;
+    char *name;
+    char *help_str;
+} gflg_bool_flag;
+
+gflg_bool_flag *bflags = NULL;
+size_t          bflagsc = 0;
+
+void gflg_int_var(int *value, char *name, int default_value, char *help_str)
 {
-    IntFlag int_flag;
+    gflg_int_flag int_flag;
     int_flag.name = name;
     int_flag.value = value;
     int_flag.help_str = help_str;
@@ -39,13 +49,13 @@ void parseInt(int *value, char *name, int default_value, char *help_str)
     *value = default_value;
 
     iflagsc++;
-    iflags = (IntFlag *)realloc(iflags, sizeof(IntFlag) * iflagsc);
+    iflags = (gflg_int_flag *)realloc(iflags, sizeof(gflg_int_flag) * iflagsc);
     iflags[iflagsc - 1] = int_flag;
 }
 
-void parseStr(char **value, char *name, char *default_value, char *help_str)
+void gflg_str_var(char **value, char *name, char *default_value, char *help_str)
 {
-    StrFlag str_flag;
+    gflg_str_flag str_flag;
     str_flag.value = value;
 
     str_flag.name = (char *)malloc(strlen(name) + 1);
@@ -78,11 +88,11 @@ void parseStr(char **value, char *name, char *default_value, char *help_str)
     }
     
     sflagsc++;
-    sflags = (StrFlag *)realloc(sflags, sizeof(StrFlag) * sflagsc);
+    sflags = (gflg_str_flag *)realloc(sflags, sizeof(gflg_str_flag) * sflagsc);
     sflags[sflagsc - 1] = str_flag;
 }
 
-void _printUsage(char *filename)
+void _gflg_print_usage(char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     size_t i;
@@ -110,19 +120,19 @@ void _printUsage(char *filename)
 
 }
 
-void parseFlags(int argc, char *argv[])
+void gflg_parse_flags(int argc, char *argv[])
 {
     if ((iflags == NULL || iflagsc == 0) && 
         (sflags == NULL || sflagsc == 0))
     {
         fprintf(stderr, "No flags to parse.\n");
-        fprintf(stderr, "Did you call parseFlags twice?\n");
+        fprintf(stderr, "Did you call gflg_parse_flags twice?\n");
         exit(1);
     }
 
     if (argc == 1)
     {
-        _printUsage(argv[0]);
+        _gflg_print_usage(argv[0]);
         exit(1);
     }
 
@@ -150,7 +160,7 @@ void parseFlags(int argc, char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                _printUsage(argv[0]);
+                _gflg_print_usage(argv[0]);
                 exit(2);
             }
         }
@@ -171,14 +181,14 @@ void parseFlags(int argc, char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                _printUsage(argv[0]);
+                _gflg_print_usage(argv[0]);
                 exit(2);
             }
         }
     }
 
     /* Clean-up, you ain't printing usage after this
-     * and you won't be able to call parseFlags */
+     * and you won't be able to call gflg_parse_flags */
     if (iflags != NULL)
     {
         free(iflags);
