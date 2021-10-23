@@ -6,6 +6,7 @@
 
 void parseInt(int *value, char *name, int default_value, char *help_str);
 void parseStr(char **value, char *name, char *default_value, char *help_str);
+void _printUsage(char *filename);
 void parseFlags(int argc, char *argv[]);
 
 typedef struct {
@@ -81,7 +82,7 @@ void parseStr(char **value, char *name, char *default_value, char *help_str)
     sflags[sflagsc - 1] = str_flag;
 }
 
-void printUsage(char *filename)
+void _printUsage(char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     for (size_t i = 0; i < iflagsc; i++)
@@ -122,7 +123,7 @@ void parseFlags(int argc, char *argv[])
 
     if (argc == 1)
     {
-        printUsage(argv[0]);
+        _printUsage(argv[0]);
         exit(1);
     }
 
@@ -149,7 +150,7 @@ void parseFlags(int argc, char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                printUsage(argv[0]);
+                _printUsage(argv[0]);
                 exit(2);
             }
         }
@@ -171,7 +172,7 @@ void parseFlags(int argc, char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                printUsage(argv[0]);
+                _printUsage(argv[0]);
                 exit(2);
             }
         }
