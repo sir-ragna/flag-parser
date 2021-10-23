@@ -135,7 +135,6 @@ void _gflg_print_usage(const char *filename)
                 sflags[i].default_value
             );
     }
-
 }
 
 void gflg_parse_flags(const int argc, const char *argv[])
@@ -193,7 +192,7 @@ void gflg_parse_flags(const int argc, const char *argv[])
             if (i < (size_t)argc) 
             {   
                 int arg_len = strlen(argv[i]);
-                *sflags[j].value = (char *)malloc(arg_len + 1);
+                *sflags[j].value = (char *)realloc(*sflags[j].value, arg_len + 1);
                 strcpy(*sflags[j].value, argv[i]);
             }
             else
@@ -207,6 +206,20 @@ void gflg_parse_flags(const int argc, const char *argv[])
 
     /* Clean-up, you ain't printing usage after this
      * and you won't be able to call gflg_parse_flags */
+    for (i = 0; i < iflagsc; i++)
+    {
+        if (iflags[i].name != NULL)
+        {
+            free(iflags[i].name);
+            iflags[i].name = NULL;
+        }        
+        if (iflags[i].help_str != NULL)
+        {
+            free(iflags[i].help_str);
+            iflags[i].help_str = NULL;
+        }
+    }
+
     if (iflags != NULL)
     {
         free(iflags);
@@ -217,13 +230,20 @@ void gflg_parse_flags(const int argc, const char *argv[])
     for (i = 0; i < sflagsc; i++)
     {
         if (sflags[i].default_value != NULL)
+        {
             free(sflags[i].default_value);
-        
+            sflags[i].default_value = NULL;
+        }        
         if (sflags[i].help_str != NULL)
+        {
             free(sflags[i].help_str);
-
+            sflags[i].help_str = NULL;
+        }
         if (sflags[i].name != NULL)
+        {
             free(sflags[i].name);
+            sflags[i].name = NULL;
+        }
     }
     
     if (sflags != NULL)
