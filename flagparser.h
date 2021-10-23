@@ -180,8 +180,11 @@ void parseFlags(int argc, char *argv[])
 
     /* Clean-up, you ain't printing usage after this
      * and you won't be able to call parseFlags */
-    free(iflags);
-    iflags = NULL;
+    if (iflags != NULL)
+    {
+        free(iflags);
+        iflags = NULL;
+    }
     iflagsc = 0;
 
     for (size_t i = 0; i < sflagsc; i++)
@@ -195,7 +198,11 @@ void parseFlags(int argc, char *argv[])
         if (sflags[i].name != NULL)
             free(sflags[i].name);
     }
-    free(sflags);
-    sflags = NULL;
+    
+    if (sflags != NULL)
+    {
+        free(sflags);
+        sflags = NULL;
+    }
     sflagsc = 0;
 }
