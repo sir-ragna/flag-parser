@@ -110,9 +110,12 @@ void printUsage(char *filename)
 
 void parseFlags(int argc, char *argv[])
 {
-    if (iflags == NULL || iflagsc == 0)
+    if ((iflags == NULL || iflagsc == 0) && 
+        (sflags == NULL || sflagsc == 0))
     {
-        fprintf(stderr, "No flags to parse\n");
+        fprintf(stderr, "No flags to parse.\n");
+        fprintf(stderr, "Either no flags were defined or parseFlags\n");
+        fprintf(stderr, "was called twice.\n");
         /* maybe someone called parseFlags() twice? */
         exit(1);
     }
@@ -174,8 +177,24 @@ void parseFlags(int argc, char *argv[])
         }
     }
 
-    /* Maybe clean-up and free memory here? */
+    /* Clean-up, you ain't printing usage after this
+     * and you won't be able to call parseFlags */
     free(iflags);
     iflags = NULL;
     iflagsc = 0;
+
+    for (size_t i = 0; i < sflagsc; i++)
+    {
+        if (sflags[i].default_value != NULL)
+            free(sflags[i].default_value);
+        
+        if (sflags[i].help_str != NULL)
+            free(sflags[i].help_str);
+
+        if (sflags[i].name != NULL)
+            free(sflags[i].name);
+    }
+    free(sflags);
+    sflags = NULL;
+    sflagsc = 0;
 }
