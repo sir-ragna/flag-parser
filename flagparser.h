@@ -123,33 +123,35 @@ void _flg_print_usage(const char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     size_t i;
-    for (i = 0; i < bflagsc; i++)
+    for (i = 0; i < sflagsc; i++) /* Print the str flags help */
     {
-        fprintf(stdout, "\t%s\n\t\t%s (default: false)\n", 
-            bflags[i].name, 
-            bflags[i].help_str
-        );
+        if (sflags[i].default_value == NULL)
+            fprintf(stdout, "\t%s <string>\n\t\t%s (default: NULL)\n\n", 
+                sflags[i].name, 
+                sflags[i].help_str);    
+        else
+            fprintf(stdout, "\t%s <string>\n\t\t%s (default: \"%s\")\n\n", 
+                sflags[i].name, 
+                sflags[i].help_str, 
+                sflags[i].default_value
+            );
     }
-    for (i = 0; i < iflagsc; i++)
+
+    for (i = 0; i < iflagsc; i++) /* Print the int flags help */
     {
-        fprintf(stdout, "\t%s\n\t\t%s (default: %i)\n", 
+        fprintf(stdout, "\t%s <n>\n\t\t%s (default: %i)\n\n", 
             iflags[i].name, 
             iflags[i].help_str, 
             iflags[i].default_value
         );
     }
-    for (i = 0; i < sflagsc; i++)
+    
+    for (i = 0; i < bflagsc; i++) /* Print the boolean flags help */
     {
-        if (sflags[i].default_value == NULL)
-            fprintf(stdout, "\t%s\n\t\t%s (default: NULL)\n", 
-                sflags[i].name, 
-                sflags[i].help_str);    
-        else
-            fprintf(stdout, "\t%s\n\t\t%s (default: \"%s\")\n", 
-                sflags[i].name, 
-                sflags[i].help_str, 
-                sflags[i].default_value
-            );
+        fprintf(stdout, "\t%s\n\t\t%s (default: false)\n\n", 
+            bflags[i].name, 
+            bflags[i].help_str
+        );
     }
 }
 
@@ -228,8 +230,15 @@ void _flg_free_mem()
     sflagsc = 0;
 }
 
+/* Parses the flags. Call once.
+ * At the end, some memory clean-up is performed making it impossible
+ * to use parse the flags a second time */
 void flg_parse_flags(const int argc, const char *argv[])
 {
+    bool print_usage;
+    /* flg_bool_var(&print_usage, "--usage", "Print usage"); */
+    flg_bool_var(&print_usage, "--help",  "Print usage");
+
     if ((iflags == NULL || iflagsc == 0) && 
         (sflags == NULL || sflagsc == 0) &&
         (bflags == NULL || bflagsc == 0))
@@ -239,15 +248,10 @@ void flg_parse_flags(const int argc, const char *argv[])
         exit(1);
     }
 
-    if (argc == 1)
-    {
-        _flg_print_usage(argv[0]);
-        exit(1);
-    }
-
-    /* Parse all flags */
-    size_t i = 1;
-    for (; i < (size_t)argc; i++)
+    size_t i;
+    /* Iterate over all args. Start i=1 to exclude the original 
+     * file name. */
+    for (i = 1; i < (size_t)argc; i++)
     {
         const char *arg = argv[i];
         
@@ -304,6 +308,12 @@ void flg_parse_flags(const int argc, const char *argv[])
                 exit(2);
             }
         }
+    }
+
+    if (print_usage)
+    {
+        _flg_print_usage(argv[0]);
+        exit(1);
     }
 
     /* Clean-up, you ain't printing usage after this
