@@ -13,7 +13,7 @@ int main(int argc, const char *argv[])
     bool keep_temp_files;
     flg_bool_var(&enable_hardmode, "--hard", "Enable HM!");
     flg_bool_var(&keep_temp_files, "-k", "Keep tmp files");
-    flg_str_var(&target, "-t", "http://localhost", "Specify target");
+    flg_str_var(&target, "--target", "http://localhost", "Specify target");
     flg_str_var(&test, "-z", NULL, "test");
     flg_str_var(&abc, "-a", "", "abc");
     flg_int_var(&amount, "-n", 10, "Amount of iterations");

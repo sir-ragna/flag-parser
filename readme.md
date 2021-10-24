@@ -61,6 +61,10 @@ For the string, `flg_str_var` will allocate memory for you.
 You will have to free it if you are done with it to avoid memory 
 leaking.
 
+Example usage:
+
+![](images/string-example.png)
+
 ## switches example
 
 Boolean flags are always false by default.
