@@ -41,20 +41,25 @@ typedef struct {
 flg_bool_flag *bflags  = NULL;
 size_t         bflagsc = 0;
 
-/* Boolean flags are always false by default */
+/* No default_value, boolean flags are always false by default */
 void flg_bool_var(bool *value, const char *name, const char *help_str)
 {
     flg_bool_flag bool_flag;
+
+    if (value == NULL)
+    {
+        fprintf(stderr, "flg_bool_var: received pointer to unallocated memory\n");
+        exit(3);
+    }
+
+    bool_flag.value = value;
+    *value = false; /* boolean switches default to false */
 
     bool_flag.name = (char *)malloc(strlen(name) + 1);
     strcpy(bool_flag.name, name);
 
     bool_flag.help_str = (char *)malloc(strlen(help_str) + 1);
     strcpy(bool_flag.help_str, help_str);
-
-    bool_flag.value = value;
-    *value = false; 
-    /* no default_value, boolean switches default to false */
 
     bflagsc++;
     bflags = (flg_bool_flag *)realloc(bflags, sizeof(flg_bool_flag) * bflagsc);
@@ -313,6 +318,14 @@ void flg_parse_flags(const int argc, const char *argv[])
     if (print_usage)
     {
         _flg_print_usage(argv[0]);
+         for (i = 0; i < sflagsc; i++)
+         {   /* De-alloc the strings that are otherwise the
+              * caller's responsibility. Because we are exiting early
+              * we need to free them ourselves. */
+             free(*sflags[i].value);
+             *sflags[i].value = NULL;
+         }
+        _flg_free_mem(); /* Do regular clean-up before exit */
         exit(1);
     }
 
