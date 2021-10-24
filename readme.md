@@ -1,9 +1,9 @@
 
 # flagparser
 
-Somewhat by golang flags package.
-
-Steps.
+Somewhat inspired by the golang flags package. 
+The idea is to have a minimal amount of effort to define cmdline 
+arguments.
 
 - include `flagparser.h`
 - define some flags variables
@@ -24,7 +24,8 @@ void flg_parse_flags(const int argc, const char *argv[]);
 
 ## Built-in `--help`
 
-The `--help` flag is automatically built-in and will list the cmdline arguments when called.
+The `--help` flag is automatically built-in and will list the cmdline 
+arguments when called together with their help string.
 
 ![built-in help example](images/example-help.png)
 
