@@ -9,7 +9,7 @@ void flg_bool_var(bool *value, const char *name, const char *help_str);
 void flg_int_var(int *value, const char *name, int default_value, const char *help_str);
 void flg_str_var(char **value, const char *name, const char *default_value, const char *help_str);
 void _flg_free_mem();
-void _flg_print_usage(const char *filename);
+void flg_print_usage(const char *filename);
 void flg_parse_flags(const int argc, const char *argv[]);
 
 typedef struct {
@@ -133,7 +133,7 @@ void flg_str_var(char **value, const char *name, const char *default_value, cons
     _flg_sflags[_flg_sflagsc - 1] = str_flag;
 }
 
-void _flg_print_usage(const char *filename)
+void flg_print_usage(const char *filename)
 {
     fprintf(stdout, "%s [args]\n", filename);
     size_t i;
@@ -297,7 +297,7 @@ void flg_parse_flags(const int argc, const char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                _flg_print_usage(argv[0]);
+                flg_print_usage(argv[0]);
                 exit(2);
             }
         }
@@ -321,7 +321,7 @@ void flg_parse_flags(const int argc, const char *argv[])
             else
             {
                 fprintf(stderr, "No value found for \"%s\"\n", arg);
-                _flg_print_usage(argv[0]);
+                flg_print_usage(argv[0]);
                 exit(2);
             }
         }
@@ -329,7 +329,7 @@ void flg_parse_flags(const int argc, const char *argv[])
 
     if (print_usage)
     {
-        _flg_print_usage(argv[0]);
+        flg_print_usage(argv[0]);
          for (i = 0; i < _flg_sflagsc; i++)
          {   /* De-alloc the strings that are otherwise the
               * caller's responsibility. Because we are exiting early
@@ -338,10 +338,10 @@ void flg_parse_flags(const int argc, const char *argv[])
              *_flg_sflags[i].value = NULL;
          }
         _flg_free_mem(); /* Do regular clean-up before exit */
-        exit(1);
+        exit(0);
     }
 
     /* Clean-up, you ain't printing usage after this
-     * and you won't be able to call flg_parse_flags */
+     * and you won't be able to call flg_parse_flags again. */
     _flg_free_mem();
 }
