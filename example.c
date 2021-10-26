@@ -4,32 +4,15 @@
 
 int main(int argc, const char *argv[])
 {
-    int amount;
-    int runners;
-    char *target;
-    char *test;
-    char *abc;
-    bool enable_hardmode;
-    bool keep_temp_files;
-    flg_bool_var(&enable_hardmode, "--hard", "Enable HM!");
-    flg_bool_var(&keep_temp_files, "-k", "Keep tmp files");
-    flg_str_var(&target, "--target", "http://localhost", "Specify target");
-    flg_str_var(&test, "-z", NULL, "test");
-    flg_str_var(&abc, "-a", "", "abc");
-    flg_int_var(&amount, "-n", 10, "Amount of iterations");
-    flg_int_var(&runners, "-r", 5, "Runners to start");
+    int *amount = flg_int_arg("-a", "--amount", 1, "Specify the amount");
+    char **dns = flg_string_arg("-d", "--dns", "1.1.1.1", "Specify the target DNS server");
+    bool *keep = flg_bool_arg("-k", "--keep", "Keep temp files");
+    
     flg_parse_flags(argc, argv);
     
-    if (enable_hardmode)
-        puts("HARD MODE enabled");
-    if (keep_temp_files)
-        puts("Keep temp files");
-    
-    printf("Test %s\n", test);
-    printf("Abc %s\n", abc);
-    printf("Target %s\n", target);
-    printf("Amount %d\n", amount);
-    printf("Runners %d\n", runners);
+    if (*keep)
+        printf("Keep is enabled ");
+    printf("DNS server \"%s\", amount: %d\n", *dns, *amount);
 
     /* You still need to clean up your own pointers 
      * The reason I am not putting this in a separate clean up func
@@ -37,12 +20,10 @@ int main(int argc, const char *argv[])
      * this memory. This seems non-obvious. This way the API remains
      * minimal. You define the args, you call parseFlags and afterwards
      * you are responsible for the cleanup yourself. */
-    if (target)
-        free(target);
-    if (test)
-        free(test);
-    if (abc)
-        free(abc);
+    free(amount);
+    free(keep);
+    free(*dns);
+    free(dns);
 
     return 0;
 }
