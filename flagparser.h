@@ -242,6 +242,7 @@ flg_int_arg(
     int_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
     int_flag.help_str       = _flg_duplicate_str(help_str);
 
+    int_flag.value = value;
     int_flag.default_value = default_value;
     *value = default_value;
 
@@ -268,6 +269,7 @@ flg_bool_arg(
     bool_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
     bool_flag.help_str       = _flg_duplicate_str(help_str);
 
+    bool_flag.value = value;
     *value = false; /* Boolean flags always default to false */
 
     _flg_bflagsc++;
@@ -400,6 +402,6 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     /* Clean-up, you ain't printing usage after this
      * and you won't be able to call flg_parse_flags again. */
     _flg_free_mem();
-    
+
     return i; /* return the offset */
 }
