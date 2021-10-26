@@ -5,18 +5,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void flg_bool_var(bool *value, const char *name, const char *help_str);
-void flg_int_var(int *value, const char *name, int default_value, const char *help_str);
-void flg_str_var(char **value, const char *name, const char *default_value, const char *help_str);
+char * _flg_duplicate_str(const char *source);
 void _flg_free_mem();
 void flg_print_usage(const char *filename);
 void flg_parse_flags(const int argc, const char *argv[]);
 
 typedef struct {
-    int *value;
-    int default_value;
-    char *name;
-    char *help_str;
+    int *value;           /* store of the actual value */
+    char *flag;           /* short form name "-n"      */
+    char *long_form_flag; /* long form name "--name"   */
+    int default_value;    /* default value             */
+    char *help_str;       /* help string               */
 } _flg_int_flag;
 
 _flg_int_flag *_flg_iflags  = NULL;
@@ -24,8 +23,9 @@ size_t _flg_iflagsc = 0;
 
 typedef struct {
     char **value;
+    char *flag;           /* short from name "-n"    */
+    char *long_form_flag; /* long form name "--name" */
     char *default_value;
-    char *name;
     char *help_str;
 } _flg_str_flag;
 
@@ -34,104 +34,14 @@ size_t _flg_sflagsc = 0;
 
 typedef struct {
     bool *value;
-    char *name;
+    char *flag;           /* short form flag "-n"    */
+    char *long_form_flag; /* long form flag "--name" */
     char *help_str;
-} flg_bool_flag;
+} _flg_bool_flag;
 
-flg_bool_flag *_flg_bflags = NULL;
+_flg_bool_flag *_flg_bflags = NULL;
 size_t _flg_bflagsc = 0;
 
-/* No default_value, boolean flags are always false by default */
-void flg_bool_var(bool *value, const char *name, const char *help_str)
-{
-    flg_bool_flag bool_flag;
-
-    if (value == NULL)
-    {
-        fprintf(stderr, "flg_bool_var: received pointer to unallocated memory\n");
-        exit(3);
-    }
-
-    bool_flag.value = value;
-    *value = false; /* boolean switches default to false */
-
-    bool_flag.name = (char *)malloc(strlen(name) + 1);
-    strcpy(bool_flag.name, name);
-
-    bool_flag.help_str = (char *)malloc(strlen(help_str) + 1);
-    strcpy(bool_flag.help_str, help_str);
-
-    _flg_bflagsc++;
-    _flg_bflags = (flg_bool_flag *)realloc(
-        _flg_bflags, 
-        sizeof(flg_bool_flag) * _flg_bflagsc
-    );
-    _flg_bflags[_flg_bflagsc - 1] = bool_flag;
-}
-
-void flg_int_var(int *value, const char *name, int default_value, const char *help_str)
-{
-    _flg_int_flag int_flag;
-    
-    int_flag.name = (char *)malloc(strlen(name) + 1);
-    strcpy(int_flag.name, name);
-
-    int_flag.help_str = (char *)malloc(strlen(help_str) + 1);
-    strcpy(int_flag.help_str, help_str);
-
-    int_flag.value = value;
-    int_flag.default_value = default_value;
-    *value = default_value;
-
-    _flg_iflagsc++;
-    _flg_iflags = (_flg_int_flag *)realloc(
-        _flg_iflags, 
-        sizeof(_flg_int_flag) * _flg_iflagsc
-    );
-    _flg_iflags[_flg_iflagsc - 1] = int_flag;
-}
-
-void flg_str_var(char **value, const char *name, const char *default_value, const char *help_str)
-{
-    _flg_str_flag str_flag;
-    str_flag.value = value;
-
-    str_flag.name = (char *)malloc(strlen(name) + 1);
-    strcpy(str_flag.name, name);
-    
-    if (default_value == NULL) 
-    {
-        *str_flag.value = NULL;
-        str_flag.default_value = NULL;
-    }
-    else
-    {
-        int default_val_len = strlen(default_value);
-
-        *value = (char *)malloc(default_val_len + 1);
-        strcpy(*value, default_value);
-        
-        str_flag.default_value = (char *)malloc(default_val_len + 1);
-        strcpy(str_flag.default_value, default_value);
-    }
-
-    if (help_str == NULL)
-    {
-        str_flag.help_str = NULL;
-    }
-    else
-    {
-        str_flag.help_str = (char *)malloc(strlen(help_str) + 1);
-        strcpy(str_flag.help_str, help_str);
-    }
-    
-    _flg_sflagsc++;
-    _flg_sflags = (_flg_str_flag *)realloc(
-        _flg_sflags, 
-        sizeof(_flg_str_flag) * _flg_sflagsc
-    );
-    _flg_sflags[_flg_sflagsc - 1] = str_flag;
-}
 
 void flg_print_usage(const char *filename)
 {
@@ -242,6 +152,90 @@ void _flg_free_mem()
         _flg_sflags = NULL;
     }
     _flg_sflagsc = 0;
+}
+
+char * _flg_duplicate_str(const char *source)
+{
+    if (source == NULL)
+        return NULL;
+    
+    char *dest = (char *)malloc(strlen(source) + 1);     
+    strcpy(dest, source); /* strcpy copies over the null terminator */
+    
+    return dest;
+}
+
+char **
+flg_string_arg(
+    const char *flag, 
+    const char *long_form_flag, 
+    const char *default_value, 
+    const char *help_str)
+{
+    char **value = (char **)malloc(sizeof(char *));
+    _flg_str_flag str_flag;
+
+    str_flag.flag           = _flg_duplicate_str(flag);
+    str_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
+    str_flag.help_str       = _flg_duplicate_str(help_str);
+
+    str_flag.value = value;
+    *str_flag.value = _flg_duplicate_str(default_value);
+
+    return value;
+}
+
+int * 
+flg_int_arg(
+    const char *flag,    /* short form flag */
+    const char *long_form_flag, /* long form flag */ 
+    const int default_value, 
+    const char *help_str)
+{
+    int *value = (int *)malloc(sizeof(int));
+    _flg_int_flag int_flag;
+    size_t len = 0;
+    
+    int_flag.flag           = _flg_duplicate_str(flag);
+    int_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
+    int_flag.help_str       = _flg_duplicate_str(help_str);
+
+    int_flag.default_value = default_value;
+    *value = default_value;
+
+    _flg_iflagsc++;
+    _flg_iflags = (_flg_int_flag *) realloc(
+        _flg_iflags, 
+        _flg_iflagsc * sizeof(_flg_int_flag)
+    );
+    _flg_iflags[_flg_iflagsc - 1] = int_flag;
+
+    return value;
+}
+
+bool * 
+flg_bool_arg(
+    const char *flag, 
+    const char *long_form_flag, 
+    const char *help_str)
+{
+    bool *value = (bool *)malloc(sizeof(bool));
+    _flg_bool_flag bool_flag;
+    
+    bool_flag.flag           = _flg_duplicate_str(flag);
+    bool_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
+    bool_flag.help_str       = _flg_duplicate_str(help_str);
+
+    *value = false; /* Boolean flags always default to false */
+
+    _flg_bflagsc++;
+    _flg_bflags = (_flg_bool_flag *) realloc(
+        _flg_bflags, 
+        _flg_bflagsc * sizeof(_flg_bool_flag)
+    );
+    _flg_bflags[_flg_bflagsc - 1] = bool_flag;
+
+    return value;
 }
 
 /* Parses the flags. Call once.
