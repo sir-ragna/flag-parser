@@ -8,7 +8,6 @@
 char * _flg_duplicate_str(const char *source);
 void _flg_free_mem();
 void flg_print_usage(const char *filename);
-void flg_parse_flags(const int argc, const char *argv[]);
 
 typedef struct {
     int *value;           /* store of the actual value */
@@ -43,19 +42,27 @@ _flg_bool_flag *_flg_bflags = NULL;
 size_t _flg_bflagsc = 0;
 
 
+typedef struct {
+    char *name;
+    unsigned int minimum_amount;
+    char *help_str;
+} _flg_rest_collection;
+
+_flg_rest_collection *_flg_rest_col = NULL;
+
 void flg_print_usage(const char *filename)
 {
-    fprintf(stdout, "%s [args]\n", filename);
+    fprintf(stdout, "%s [OPTIONS]...\n", filename);
     size_t i;
     for (i = 0; i < _flg_sflagsc; i++) /* Print the str flags help */
     {
         if (_flg_sflags[i].default_value == NULL)
             fprintf(stdout, "\t%s <string>\n\t\t%s (default: NULL)\n\n", 
-                _flg_sflags[i].name, 
+                _flg_sflags[i].flag, 
                 _flg_sflags[i].help_str);    
         else
             fprintf(stdout, "\t%s <string>\n\t\t%s (default: \"%s\")\n\n", 
-                _flg_sflags[i].name, 
+                _flg_sflags[i].flag, 
                 _flg_sflags[i].help_str, 
                 _flg_sflags[i].default_value
             );
@@ -64,7 +71,7 @@ void flg_print_usage(const char *filename)
     for (i = 0; i < _flg_iflagsc; i++) /* Print the int flags help */
     {
         fprintf(stdout, "\t%s <n>\n\t\t%s (default: %i)\n\n", 
-            _flg_iflags[i].name, 
+            _flg_iflags[i].flag, 
             _flg_iflags[i].help_str, 
             _flg_iflags[i].default_value
         );
@@ -73,11 +80,58 @@ void flg_print_usage(const char *filename)
     for (i = 0; i < _flg_bflagsc; i++) /* Print the boolean flags help */
     {
         fprintf(stdout, "\t%s\n\t\t%s (default: false)\n\n", 
-            _flg_bflags[i].name, 
+            _flg_bflags[i].flag, 
             _flg_bflags[i].help_str
         );
     }
 }
+
+void _flg_free_bflag(_flg_bool_flag *bf)
+{
+    /* We don't free bf->value on purpose
+     * that pointer has been given back to the caller
+     * The caller might still use it and will be responsible
+     * to free it themselves. */
+    if (bf->flag == NULL)
+    {
+        free(bf->flag);
+        bf->flag = NULL;
+    }
+    if (bf->long_form_flag != NULL)
+    {
+        free(bf->long_form_flag);
+        bf->long_form_flag = NULL;
+    }
+    if (bf->help_str != NULL)
+    {
+        free(bf->help_str);
+        bf->help_str = NULL;
+    }
+}
+
+void _flg_free_iflag(_flg_int_flag *int_flag)
+{
+    /* We don't free int_flag->value on purpose
+     * that pointer has been given back to the caller
+     * The caller might still use it and will be responsible
+     * to free it themselves. */
+    if (int_flag->flag == NULL)
+    {
+        free(int_flag->flag);
+        int_flag->flag = NULL;
+    }
+    if (int_flag->long_form_flag != NULL)
+    {
+        free(int_flag->long_form_flag);
+        int_flag->long_form_flag = NULL;
+    }
+    if (int_flag->help_str != NULL)
+    {
+        free(int_flag->help_str);
+        int_flag->help_str = NULL;
+    }
+}
+
 
 void _flg_free_mem()
 {
@@ -85,18 +139,8 @@ void _flg_free_mem()
     /* Clean up boolean flags */
     for (i = 0; i < _flg_bflagsc; i++)
     {
-        if (_flg_bflags[i].name != NULL)
-        {
-            free(_flg_bflags[i].name);
-            _flg_bflags[i].name = NULL;
-        }        
-        if (_flg_bflags[i].help_str != NULL)
-        {
-            free(_flg_bflags[i].help_str);
-            _flg_bflags[i].help_str = NULL;
-        }
+        _flg_free_bflag(&_flg_bflags[i]);
     }
-
     if (_flg_bflags != NULL)
     {
         free(_flg_bflags);
@@ -107,16 +151,7 @@ void _flg_free_mem()
     /* Clean up int flags */
     for (i = 0; i < _flg_iflagsc; i++)
     {
-        if (_flg_iflags[i].name != NULL)
-        {
-            free(_flg_iflags[i].name);
-            _flg_iflags[i].name = NULL;
-        }        
-        if (_flg_iflags[i].help_str != NULL)
-        {
-            free(_flg_iflags[i].help_str);
-            _flg_iflags[i].help_str = NULL;
-        }
+        _flg_free_iflag(&_flg_iflags[i]);
     }
 
     if (_flg_iflags != NULL)
@@ -139,10 +174,10 @@ void _flg_free_mem()
             free(_flg_sflags[i].help_str);
             _flg_sflags[i].help_str = NULL;
         }
-        if (_flg_sflags[i].name != NULL)
+        if (_flg_sflags[i].flag != NULL)
         {
-            free(_flg_sflags[i].name);
-            _flg_sflags[i].name = NULL;
+            free(_flg_sflags[i].flag);
+            _flg_sflags[i].flag = NULL;
         }
     }
     
@@ -178,9 +213,17 @@ flg_string_arg(
     str_flag.flag           = _flg_duplicate_str(flag);
     str_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
     str_flag.help_str       = _flg_duplicate_str(help_str);
+    str_flag.default_value  = _flg_duplicate_str(default_value);
 
     str_flag.value = value;
-    *str_flag.value = _flg_duplicate_str(default_value);
+    *str_flag.value = NULL; /* _flg_duplicate_str(default_value); */
+
+    _flg_sflagsc++;
+    _flg_sflags = (_flg_str_flag *) realloc(
+        _flg_sflags, 
+        _flg_sflagsc * sizeof(_flg_str_flag)
+    );
+    _flg_sflags[_flg_sflagsc - 1] = str_flag;
 
     return value;
 }
@@ -194,7 +237,6 @@ flg_int_arg(
 {
     int *value = (int *)malloc(sizeof(int));
     _flg_int_flag int_flag;
-    size_t len = 0;
     
     int_flag.flag           = _flg_duplicate_str(flag);
     int_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
@@ -221,7 +263,7 @@ flg_bool_arg(
 {
     bool *value = (bool *)malloc(sizeof(bool));
     _flg_bool_flag bool_flag;
-    
+
     bool_flag.flag           = _flg_duplicate_str(flag);
     bool_flag.long_form_flag = _flg_duplicate_str(long_form_flag);
     bool_flag.help_str       = _flg_duplicate_str(help_str);
@@ -241,87 +283,105 @@ flg_bool_arg(
 /* Parses the flags. Call once.
  * At the end, some memory clean-up is performed making it impossible
  * to use parse the flags a second time */
-void flg_parse_flags(const int argc, const char *argv[])
+unsigned int flg_parse_flags(const int argc, const char *argv[])
 {
-    bool print_usage;
-    /* flg_bool_var(&print_usage, "--usage", "Print usage"); */
-    flg_bool_var(&print_usage, "--help",  "Print usage");
+    bool *print_usage = flg_bool_arg("-h", "--help", "Print usage");
 
     if ((_flg_iflags == NULL || _flg_iflagsc == 0) && 
         (_flg_sflags == NULL || _flg_sflagsc == 0) &&
         (_flg_bflags == NULL || _flg_bflagsc == 0))
     {
-        fprintf(stderr, "No flags to parse.\n");
-        fprintf(stderr, "Did you call flg_parse_flags twice?\n");
+        fprintf(stderr, "No flags to parse.\n"
+                        "  Did you forget to define any args?\n"
+                        "  Or did you call flg_parse_flags twice?\n");
         exit(1);
     }
 
     size_t i;
-    /* Iterate over all args. Start i=1 to exclude the original 
-     * file name. */
+    /* Iterate over all [OPTIONS]... Start i=1 to exclude the original 
+     * file name. Stop parsing of no arguments are found any more */
     for (i = 1; i < (size_t)argc; i++)
     {
         const char *arg = argv[i];
         
-        if (arg[0] != '-')
-            continue; /* not a flag */
+        if (strcmp("--", arg) == 0)
+        {
+            /* End of [OPTIONS]... */ 
+            break;
+        }
         
         size_t j;
         /* Parse boolean flags */
         for (j = 0; j < _flg_bflagsc; j++)
         {
-            if (strcmp(_flg_bflags[j].name, arg) != 0)
-                continue;
-
-            /* If the boolean flag exists, enable it */
-            *_flg_bflags[j].value = true;
+            if (_flg_bflags[j].flag != NULL && 
+                strcmp(_flg_bflags[j].flag, arg) == 0)
+            {   /* short form match */
+                *_flg_bflags[j].value = true;
+            }
+            if (_flg_bflags[j].long_form_flag != NULL && 
+                strcmp(_flg_bflags[j].long_form_flag, arg) == 0)
+            {   /* long form match */
+                *_flg_bflags[j].value = true;
+            }
         }
 
         /* Parse int flags */
         for (j = 0; j < _flg_iflagsc; j++)
         {
-            if (strcmp(_flg_iflags[j].name, arg) != 0)
-                continue;
-
-            i++; /* retrieve the next arg */
-            if (i < (size_t)argc) 
-            {   /* convert str to int */
-                *_flg_iflags[j].value = atoi(argv[i]);
-            }
-            else
+            if ((_flg_iflags[j].flag != NULL && 
+                strcmp(_flg_iflags[j].flag, arg) == 0) 
+                ||
+                (_flg_iflags[j].long_form_flag != NULL && 
+                strcmp(_flg_iflags[j].long_form_flag, arg) == 0)
+               )
             {
-                fprintf(stderr, "No value found for \"%s\"\n", arg);
-                flg_print_usage(argv[0]);
-                exit(2);
+                /* short form or long form match */
+                i++; /* retrieve the next arg */
+                if (i < (size_t)argc) 
+                {   /* convert str to int */
+                    *_flg_iflags[j].value = atoi(argv[i]);
+                }
+                else
+                {
+                    fprintf(stderr, "No value found for \"%s\"\n", arg);
+                    flg_print_usage(argv[0]);
+                    exit(2);
+                }
             }
         }
 
         /* Parse str flags */
         for (j = 0; j < _flg_sflagsc; j++)
         {
-            if (strcmp(_flg_sflags[j].name, arg) != 0)
-                continue;
-
-            i++; /* Retrieve the next argument */
-            if (i < (size_t)argc) 
-            {   
-                int arg_len = strlen(argv[i]);
-                *_flg_sflags[j].value = (char *)realloc(
-                    *_flg_sflags[j].value, 
-                    arg_len + 1
-                );
-                strcpy(*_flg_sflags[j].value, argv[i]);
-            }
-            else
-            {
-                fprintf(stderr, "No value found for \"%s\"\n", arg);
-                flg_print_usage(argv[0]);
-                exit(2);
+            if ((_flg_sflags[j].flag != NULL && 
+                strcmp(_flg_sflags[j].flag, arg) == 0)
+               ||
+               (_flg_sflags[j].long_form_flag != NULL && 
+                strcmp(_flg_sflags[j].long_form_flag, arg) == 0))
+            { 
+                /* short or long form match */
+                i++; /* Retrieve the next argument */
+                if (i < (size_t)argc) 
+                {   
+                    int arg_len = strlen(argv[i]);
+                    *_flg_sflags[j].value = (char *)realloc(
+                        *_flg_sflags[j].value, 
+                        arg_len + 1
+                    );
+                    strcpy(*_flg_sflags[j].value, argv[i]);
+                }
+                else
+                {
+                    fprintf(stderr, "No value found for \"%s\"\n", arg);
+                    flg_print_usage(argv[0]);
+                    exit(2);
+                }
             }
         }
     }
 
-    if (print_usage)
+    if (*print_usage)
     {
         flg_print_usage(argv[0]);
          for (i = 0; i < _flg_sflagsc; i++)
@@ -332,10 +392,14 @@ void flg_parse_flags(const int argc, const char *argv[])
              *_flg_sflags[i].value = NULL;
          }
         _flg_free_mem(); /* Do regular clean-up before exit */
+        free(print_usage);
         exit(0);
     }
 
+    free(print_usage);
     /* Clean-up, you ain't printing usage after this
      * and you won't be able to call flg_parse_flags again. */
     _flg_free_mem();
+    
+    return i; /* return the offset */
 }
