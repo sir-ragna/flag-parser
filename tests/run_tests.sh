@@ -36,5 +36,5 @@ compile_and_assert()
 
 compile_and_assert 5 illegal_redefine
 compile_and_assert 4 null_define_bool
-
-compile_and_assert 3 null_define_string
+compile_and_assert 4 null_define_string
+compile_and_assert 4 null_define_int
