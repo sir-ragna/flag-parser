@@ -4,6 +4,13 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+cleanup()
+{
+    make clean >/dev/null
+}
+
+trap cleanup EXIT
+
 check_memory_leaks()
 {
     TARGET=$1
@@ -65,5 +72,5 @@ compile_and_assert 0 define_rest_collection
 make all >/dev/null
 check_memory_leaks define_rest_collection test
 check_memory_leaks repeated_parse_flags
-make clean >/dev/null
+#make clean >/dev/null
 
