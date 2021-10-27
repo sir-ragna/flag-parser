@@ -350,9 +350,6 @@ flg_bool_arg(
  * Exits program with code 2 if no value was provded for a flag. */
 unsigned int flg_parse_flags(const int argc, const char *argv[])
 {
-    /* Define the built-in help flag */
-    bool *print_usage = flg_bool_arg("-h", "--help", "Print usage");
-
     int exit_code = 0;
 
     if ((_flg_iflags == NULL || _flg_iflagsc == 0) && 
@@ -364,6 +361,10 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
                         "  Or did you call flg_parse_flags twice?\n");
         exit(1);
     }
+
+    /* Define the built-in help flag */
+    bool *print_usage = flg_bool_arg("-h", "--help", "Print usage");
+
     unsigned int offset = 0;
     size_t i;
     /* Iterate over all [OPTIONS]... Start i=1 to exclude the original 
