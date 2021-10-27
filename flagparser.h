@@ -292,7 +292,9 @@ flg_bool_arg(
  * to use parse the flags a second time */
 unsigned int flg_parse_flags(const int argc, const char *argv[])
 {
+    /* define help flag */
     bool *print_usage = flg_bool_arg("-h", "--help", "Print usage");
+    int exit_code = 0;
 
     if ((_flg_iflags == NULL || _flg_iflagsc == 0) && 
         (_flg_sflags == NULL || _flg_sflagsc == 0) &&
@@ -311,11 +313,18 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     {
         const char *arg = argv[i];
         
+        /* check if the strings starts with a dash */
+        if (strncmp("-", arg, 1) != 0) 
+        { 
+            break; /* Break no more options */
+        }
+
+        /* End of [OPTIONS]... */ 
         if (strcmp("--", arg) == 0)
         {
-            /* End of [OPTIONS]... */ 
             break;
         }
+
         
         size_t j;
         /* Parse boolean flags */
@@ -355,8 +364,9 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
                 else
                 {
                     fprintf(stderr, "No value found for \"%s\"\n", arg);
-                    flg_print_usage(argv[0]);
-                    exit(2);
+                    *print_usage = true;
+                    exit_code = 2;
+                    goto break_outer;
                 }
             }
         }
@@ -385,32 +395,55 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
                 else
                 {
                     fprintf(stderr, "No value found for \"%s\"\n", arg);
-                    flg_print_usage(argv[0]);
-                    exit(2);
+                    *print_usage = true;
+                    exit_code = 2;
+                    goto break_outer;
                 }
             }
         }
+        
+        
+        if (offset != i) /* arg was not recognised */
+        {
+            fprintf(stderr, "Did not recognize the option \"%s\"\n", arg);
+            *print_usage = true;
+            exit_code = 3;
+        }
     }
+    break_outer: /* exit from loop */
 
     if (*print_usage)
     {
         flg_print_usage(argv[0]);
-         for (i = 0; i < _flg_sflagsc; i++)
-         {   /* De-alloc the strings that are otherwise the
-              * caller's responsibility. Because we are exiting early
-              * we need to free them ourselves. */
-             free(*_flg_sflags[i].value);
-             *_flg_sflags[i].value = NULL;
-         }
+        for (i = 0; i < _flg_sflagsc; i++)
+        {   /* De-alloc the strings that are otherwise the
+            * caller's responsibility. Because we are exiting early
+            * we need to free them ourselves. */
+            free(*_flg_sflags[i].value);
+            *_flg_sflags[i].value = NULL;
+            free(_flg_sflags[i].value);
+            _flg_sflags[i].value = NULL;
+        }
+        for (i = 0; i < _flg_bflagsc; i++) /* same for bool flags */
+        {
+            free(_flg_bflags[i].value);
+            _flg_bflags[i].value = NULL;
+        }
+        for (i = 0; i < _flg_iflagsc; i++) /* same for int flags */
+        {
+            free(_flg_iflags[i].value);
+            _flg_iflags[i].value = NULL;
+        }
         _flg_free_mem(); /* Do regular clean-up before exit */
-        free(print_usage);
-        exit(0);
+        exit(exit_code);
     }
 
-    free(print_usage);
     /* Clean-up, you ain't printing usage after this
      * and you won't be able to call flg_parse_flags again. */
     _flg_free_mem();
+
+    free(print_usage); /* We created this for internal use, 
+                        * we need to clean it up as such */
 
     return offset; /* return the offset */
 }
