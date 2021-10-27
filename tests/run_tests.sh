@@ -9,15 +9,20 @@ check_memory_leaks()
     TARGET=$1
     shift
     TMPFILE=/tmp/TARGET-valgrind-out.tmp
+    rm $TMPFILE 2>/dev/null
     valgrind --leak-check=full --errors-for-leak-kinds=all --log-file="${TMPFILE}" --error-exitcode=33 "./$TARGET" $@ >/dev/null
     RETCODE=$?
-    if [ "$?" -eq "33" ]; then # we have a memory issue
+    if [ "${RETCODE}" -eq "127" ]; then # we have a memory issue
+        printf "File not found!!\n"
+        printf " ${RED}[FAIL]${NC} ${TARGET} <- Could not run test\n"
+        exit 3
+    fi
+    if [ "${RETCODE}" -eq "33" ]; then # we have a memory issue
         printf " ${RED}[FAIL]${NC} ${TARGET} <- Failed memory test\n"
         cat "${TMPFILE}"
-    else # we don't have a memory issue (we don't care about other ret codes)
-         # *\(o_O)/*
+        exit 2
+    else
         printf " ${GREEN}[PASS]${NC} ${TARGET} memtest\n"
-        #cat "${TMPFILE}"
     fi
 }
 
@@ -59,5 +64,6 @@ compile_and_assert 0 define_rest_collection
 
 make all >/dev/null
 check_memory_leaks define_rest_collection test
+check_memory_leaks repeated_parse_flags
 make clean >/dev/null
 
