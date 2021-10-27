@@ -9,7 +9,7 @@ int main(int argc, const char *argv[])
     bool *keep = flg_bool_arg("-k", "--keep", "Keep temp files");
     
     /* Optionally define the non-option args */
-    flg_define_rest_collection("FILE", 1, "Files to process");
+    flg_define_rest_collection("FILE", 0, "Files to process");
 
     int offset = flg_parse_flags(argc, argv);
 

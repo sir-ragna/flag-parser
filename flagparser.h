@@ -65,16 +65,25 @@ void flg_define_rest_collection(const char *name, unsigned short minimum, const 
 
 void flg_print_usage(const char *filename)
 {
-    fprintf(stdout, "%s [OPTIONS]...\n", filename);
+    if (_flg_rest_col && _flg_rest_col->name)
+    {
+        fprintf(stdout, "%s [OPTIONS]... [%s]...\n", filename,  _flg_rest_col->name);
+        fprintf(stdout, "  [%s] %s\n", _flg_rest_col->name, _flg_rest_col->help_str);
+        fprintf(stdout, "  [OPTIONS]\n");
+    }
+    else
+    {
+        fprintf(stdout, "%s [OPTIONS]...\n", filename);
+    }
     size_t i;
     for (i = 0; i < _flg_sflagsc; i++) /* Print the str flags help */
     {
         if (_flg_sflags[i].default_value == NULL)
-            fprintf(stdout, "\t%s <string>\n\t\t%s (default: NULL)\n\n", 
+            fprintf(stdout, "    %s <string>\n        %s (default: NULL)\n\n", 
                 _flg_sflags[i].flag, 
                 _flg_sflags[i].help_str);    
         else
-            fprintf(stdout, "\t%s <string>\n\t\t%s (default: \"%s\")\n\n", 
+            fprintf(stdout, "    %s <string>\n        %s (default: \"%s\")\n\n", 
                 _flg_sflags[i].flag, 
                 _flg_sflags[i].help_str, 
                 _flg_sflags[i].default_value
@@ -83,7 +92,7 @@ void flg_print_usage(const char *filename)
 
     for (i = 0; i < _flg_iflagsc; i++) /* Print the int flags help */
     {
-        fprintf(stdout, "\t%s <n>\n\t\t%s (default: %i)\n\n", 
+        fprintf(stdout, "    %s <n>\n        %s (default: %i)\n\n", 
             _flg_iflags[i].flag, 
             _flg_iflags[i].help_str, 
             _flg_iflags[i].default_value
@@ -92,7 +101,7 @@ void flg_print_usage(const char *filename)
     
     for (i = 0; i < _flg_bflagsc; i++) /* Print the boolean flags help */
     {
-        fprintf(stdout, "\t%s\n\t\t%s (default: false)\n\n", 
+        fprintf(stdout, "    %s\n        %s (default: false)\n\n", 
             _flg_bflags[i].flag, 
             _flg_bflags[i].help_str
         );
