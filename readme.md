@@ -103,4 +103,5 @@ arguments when called together with their help string.
 
 - Compiles under **c89** and **C++17**. (run `make test`)
 - Identifiers use snake case
-- Uses the prefix `flg_`.
+- Uses the prefix `flg_` for public identifiers
+- Uses the prefix `_flg_` for private identifiers
