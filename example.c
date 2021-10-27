@@ -8,6 +8,7 @@ int main(int argc, const char *argv[])
     char **dns = flg_string_arg("-d", "--dns", "1.1.1.1", "Specify the target DNS server");
     bool *keep = flg_bool_arg("-k", "--keep", "Keep temp files");
     
+    /* Optionally define the non-option args */
     flg_define_rest_collection("FILE", 1, "Files to process");
 
     int offset = flg_parse_flags(argc, argv);
@@ -16,7 +17,7 @@ int main(int argc, const char *argv[])
     int i;
     for (i = offset; i < argc; i++)
     {
-        printf("Rest ARG: %i \"%s\"\n", i, argv[i]);
+        printf("Rest ARG: %i \"%s\"\n", i - offset, argv[i]);
     }
     
     if (*keep)

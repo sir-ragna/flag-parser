@@ -259,7 +259,7 @@ bool _flg_check_existence(const char *flag, const char *long_form_flag)
             return true;
     }
     
-    return false;
+    return false; /* no collisions with existing flags found */
 }
 
 /* Exit program upon validation failure
@@ -502,7 +502,10 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     break_outer: /* exit from loop */
 
     /* Check whether we have the minimum of rest items in our collection */
-    if (_flg_rest_col->minimum_amount > (argc - (offset + 1)))
+    if (_flg_rest_col->minimum_amount > (argc - (offset + 1)) 
+        && !*print_usage /* Except --help, we always want the help print
+                          * to work without extra args */
+        )
     {
         fprintf(stderr, "The minimum amount of requested [%s]... "
             "args was not found\n", _flg_rest_col->name);
