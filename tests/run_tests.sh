@@ -14,10 +14,10 @@ trap cleanup EXIT
 check_memory_leaks()
 {
     TARGET=$1
-    shift
+    shift # remove the first arg($1) from the $@ list
     TMPFILE=/tmp/TARGET-valgrind-out.tmp
     rm $TMPFILE 2>/dev/null
-    valgrind --leak-check=full --errors-for-leak-kinds=all --log-file="${TMPFILE}" --error-exitcode=33 "./$TARGET" $@ >/dev/null
+    valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --log-file="${TMPFILE}" --error-exitcode=33 "./$TARGET" $@ >/dev/null
     RETCODE=$?
     if [ "${RETCODE}" -eq "127" ]; then # we have a memory issue
         printf "File not found!!\n"
@@ -71,6 +71,5 @@ compile_and_assert 0 define_rest_collection
 
 make all >/dev/null
 check_memory_leaks define_rest_collection test
-check_memory_leaks repeated_parse_flags
-#make clean >/dev/null
+check_memory_leaks define_rest_collection abc xyz 1234
 
