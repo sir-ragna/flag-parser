@@ -17,7 +17,7 @@ compile_and_assert()
     clang -std=c89 -Wall -Werror -o "${TARGET}" "${TARGET}.c"
     if [ "$?" -ne "0" ]; then
         printf " ${RED}[FAIL]${NC} ${TARGET} <- Compilation failed\n"
-        return
+        exit 1
     fi
 
     # Execute the target, hide the output
@@ -38,3 +38,4 @@ compile_and_assert 5 illegal_redefine
 compile_and_assert 4 null_define_bool
 compile_and_assert 4 null_define_string
 compile_and_assert 4 null_define_int
+compile_and_assert 1 repeated_parse_flags
