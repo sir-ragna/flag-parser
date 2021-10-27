@@ -205,6 +205,35 @@ char * _flg_duplicate_str(const char *source)
     return dest;
 }
 
+/* Check whether this flag has already been defined before */
+bool _flg_check_existence(char *flag, char *long_form_flag)
+{
+    size_t i;
+    for (i = 0; i < _flg_iflagsc; i++)
+    {
+        if (strcmp(_flg_iflags[i].flag, flag) == 0)
+            return true;
+        if (strcmp(_flg_iflags[i].long_form_flag, long_form_flag) == 0)
+            return true;
+    }
+    for (i = 0; i < _flg_sflagsc; i++)
+    {
+        if (strcmp(_flg_sflags[i].flag, flag) == 0)
+            return true;
+        if (strcmp(_flg_sflags[i].long_form_flag, long_form_flag) == 0)
+            return true;
+    }
+    for (i = 0; i < _flg_bflagsc; i++)
+    {
+        if (strcmp(_flg_bflags[i].flag, flag) == 0)
+            return true;
+        if (strcmp(_flg_bflags[i].long_form_flag, long_form_flag) == 0)
+            return true;
+    }
+    
+    return false;
+}
+
 char **
 flg_string_arg(
     const char *flag, 
@@ -212,6 +241,15 @@ flg_string_arg(
     const char *default_value, 
     const char *help_str)
 {
+    if ((flag == NULL           || flag[0] == '\0') /* NULL or empty */
+        && 
+        (long_form_flag == NULL || long_form_flag[0] == '\0')
+       )
+    {
+        fprintf(stderr, "You need to define the flag, either in "
+                "short form(-f) or in long form(--flag) format\n");
+    }
+
     char **value = (char **)malloc(sizeof(char *));
     _flg_str_flag str_flag;
 
