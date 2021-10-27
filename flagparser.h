@@ -43,9 +43,9 @@ size_t _flg_bflagsc = 0;
 
 
 typedef struct {
-    const char *name;
+    char *name;
     unsigned int minimum_amount;
-    const char *help_str;
+    char *help_str;
 } _flg_rest_collection;
 
 _flg_rest_collection *_flg_rest_col = NULL;
@@ -205,6 +205,23 @@ void _flg_free_mem()
         _flg_sflags = NULL;
     }
     _flg_sflagsc = 0;
+
+    /* remove the rest collection */
+    if (_flg_rest_col != NULL)
+    {
+        if (_flg_rest_col->name != NULL)
+        {
+            free(_flg_rest_col->name);
+            _flg_rest_col->name = NULL;
+        }
+        if (_flg_rest_col->help_str != NULL)
+        {
+            free(_flg_rest_col->help_str);
+            _flg_rest_col->help_str = NULL;
+        }
+        free(_flg_rest_col);
+        _flg_rest_col = NULL;
+    }
 }
 
 char * _flg_duplicate_str(const char *source)
@@ -487,7 +504,7 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     /* Check whether we have the minimum of rest items in our collection */
     if (_flg_rest_col->minimum_amount > (argc - (offset + 1)))
     {
-        fprintf(stderr, "The minimum amount of requested [%s] "
+        fprintf(stderr, "The minimum amount of requested [%s]... "
             "args was not found\n", _flg_rest_col->name);
         exit(7);
     }
