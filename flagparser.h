@@ -205,33 +205,54 @@ char * _flg_duplicate_str(const char *source)
     return dest;
 }
 
+
 /* Check whether this flag has already been defined before */
-bool _flg_check_existence(char *flag, char *long_form_flag)
+bool _flg_check_existence(const char *flag, const char *long_form_flag)
 {
     size_t i;
     for (i = 0; i < _flg_iflagsc; i++)
     {
-        if (strcmp(_flg_iflags[i].flag, flag) == 0)
-            return true;
-        if (strcmp(_flg_iflags[i].long_form_flag, long_form_flag) == 0)
-            return true;
+        if (strcmp(_flg_iflags[i].flag, flag) == 0 ||
+            strcmp(_flg_iflags[i].long_form_flag, long_form_flag) == 0)
+            return true; /* found an int flag */
     }
     for (i = 0; i < _flg_sflagsc; i++)
     {
-        if (strcmp(_flg_sflags[i].flag, flag) == 0)
-            return true;
-        if (strcmp(_flg_sflags[i].long_form_flag, long_form_flag) == 0)
+        if (strcmp(_flg_sflags[i].flag, flag) == 0 ||
+            strcmp(_flg_sflags[i].long_form_flag, long_form_flag) == 0)
             return true;
     }
     for (i = 0; i < _flg_bflagsc; i++)
     {
-        if (strcmp(_flg_bflags[i].flag, flag) == 0)
-            return true;
-        if (strcmp(_flg_bflags[i].long_form_flag, long_form_flag) == 0)
+        if (strcmp(_flg_bflags[i].flag, flag) == 0 ||
+            strcmp(_flg_bflags[i].long_form_flag, long_form_flag) == 0)
             return true;
     }
     
     return false;
+}
+
+/* Exit program upon validation failure
+ * exit with code 4 when the flags are NULL or EMPTY
+ * exit with code 5 when the flags are already defined */
+void _flg_validate_flag_definition(const char *flag, const char *long_form_flag)
+{
+    if ((flag == NULL || flag[0] == '\0') /* NULL or empty */
+        && 
+        (long_form_flag == NULL || long_form_flag[0] == '\0')
+       )
+    {
+        fprintf(stderr, "You need to define the flag, either in "
+                "short form(-f) or in long form(--flag) format\n");
+        exit(4);
+    }
+
+    if (_flg_check_existence(flag, long_form_flag))
+    {
+        fprintf(stderr, "Flag definition collision\n"
+            "Please note the `-h` and `--help` flags are predefined\n");
+        exit(5);
+    }
 }
 
 char **
@@ -241,14 +262,7 @@ flg_string_arg(
     const char *default_value, 
     const char *help_str)
 {
-    if ((flag == NULL           || flag[0] == '\0') /* NULL or empty */
-        && 
-        (long_form_flag == NULL || long_form_flag[0] == '\0')
-       )
-    {
-        fprintf(stderr, "You need to define the flag, either in "
-                "short form(-f) or in long form(--flag) format\n");
-    }
+    _flg_validate_flag_definition(flag, long_form_flag);
 
     char **value = (char **)malloc(sizeof(char *));
     _flg_str_flag str_flag;
@@ -278,6 +292,8 @@ flg_int_arg(
     const int default_value, 
     const char *help_str)
 {
+    _flg_validate_flag_definition(flag, long_form_flag);
+
     int *value = (int *)malloc(sizeof(int));
     _flg_int_flag int_flag;
     
@@ -305,6 +321,8 @@ flg_bool_arg(
     const char *long_form_flag, 
     const char *help_str)
 {
+    _flg_validate_flag_definition(flag, long_form_flag);
+
     bool *value = (bool *)malloc(sizeof(bool));
     _flg_bool_flag bool_flag;
 
@@ -327,11 +345,14 @@ flg_bool_arg(
 
 /* Parses the flags. Call once.
  * At the end, some memory clean-up is performed making it impossible
- * to use parse the flags a second time */
+ * to use parse the flags a second time 
+ * Exits program with code 3 if an unrecognised option was found.
+ * Exits program with code 2 if no value was provded for a flag. */
 unsigned int flg_parse_flags(const int argc, const char *argv[])
 {
-    /* define help flag */
+    /* Define the built-in help flag */
     bool *print_usage = flg_bool_arg("-h", "--help", "Print usage");
+
     int exit_code = 0;
 
     if ((_flg_iflags == NULL || _flg_iflagsc == 0) && 
