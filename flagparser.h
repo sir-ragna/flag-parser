@@ -43,12 +43,25 @@ size_t _flg_bflagsc = 0;
 
 
 typedef struct {
-    char *name;
+    const char *name;
     unsigned int minimum_amount;
-    char *help_str;
+    const char *help_str;
 } _flg_rest_collection;
 
 _flg_rest_collection *_flg_rest_col = NULL;
+
+void flg_define_rest_collection(const char *name, unsigned short minimum, const char *help_str)
+{
+    if (_flg_rest_col != NULL)
+    {
+        fprintf(stderr, "There is already a rest collection defined\n");
+        exit(6);
+    }
+    _flg_rest_col = (_flg_rest_collection *)malloc(sizeof(_flg_rest_collection));
+    _flg_rest_col->name = _flg_duplicate_str(name);
+    _flg_rest_col->help_str = _flg_duplicate_str(help_str);
+    _flg_rest_col->minimum_amount = minimum;
+}
 
 void flg_print_usage(const char *filename)
 {
@@ -384,7 +397,6 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
         {
             break;
         }
-
         
         size_t j;
         /* Parse boolean flags */
@@ -472,6 +484,14 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     }
     break_outer: /* exit from loop */
 
+    /* Check whether we have the minimum of rest items in our collection */
+    if (_flg_rest_col->minimum_amount > (argc - (offset + 1)))
+    {
+        fprintf(stderr, "The minimum amount of requested [%s] "
+            "args was not found\n", _flg_rest_col->name);
+        exit(7);
+    }
+
     if (*print_usage)
     {
         flg_print_usage(argv[0]);
@@ -505,5 +525,5 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     free(print_usage); /* We created this for internal use, 
                         * we need to clean it up as such */
 
-    return offset; /* return the offset */
+    return offset + 1; /* return index+1 of the last found flag */
 }
