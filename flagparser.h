@@ -92,7 +92,7 @@ void _flg_free_bflag(_flg_bool_flag *bf)
      * that pointer has been given back to the caller
      * The caller might still use it and will be responsible
      * to free it themselves. */
-    if (bf->flag == NULL)
+    if (bf->flag != NULL)
     {
         free(bf->flag);
         bf->flag = NULL;
@@ -115,7 +115,7 @@ void _flg_free_iflag(_flg_int_flag *int_flag)
      * that pointer has been given back to the caller
      * The caller might still use it and will be responsible
      * to free it themselves. */
-    if (int_flag->flag == NULL)
+    if (int_flag->flag != NULL)
     {
         free(int_flag->flag);
         int_flag->flag = NULL;
@@ -178,6 +178,11 @@ void _flg_free_mem()
         {
             free(_flg_sflags[i].flag);
             _flg_sflags[i].flag = NULL;
+        }
+        if (_flg_sflags[i].long_form_flag != NULL)
+        {
+            free(_flg_sflags[i].long_form_flag);
+            _flg_sflags[i].long_form_flag = NULL;
         }
     }
     
@@ -298,7 +303,7 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
                         "  Or did you call flg_parse_flags twice?\n");
         exit(1);
     }
-
+    unsigned int offset = 0;
     size_t i;
     /* Iterate over all [OPTIONS]... Start i=1 to exclude the original 
      * file name. Stop parsing of no arguments are found any more */
@@ -320,11 +325,13 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
                 strcmp(_flg_bflags[j].flag, arg) == 0)
             {   /* short form match */
                 *_flg_bflags[j].value = true;
+                offset = i;
             }
             if (_flg_bflags[j].long_form_flag != NULL && 
                 strcmp(_flg_bflags[j].long_form_flag, arg) == 0)
             {   /* long form match */
                 *_flg_bflags[j].value = true;
+                offset = i;
             }
         }
 
@@ -340,6 +347,7 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
             {
                 /* short form or long form match */
                 i++; /* retrieve the next arg */
+                offset = i;
                 if (i < (size_t)argc) 
                 {   /* convert str to int */
                     *_flg_iflags[j].value = atoi(argv[i]);
@@ -364,6 +372,7 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
             { 
                 /* short or long form match */
                 i++; /* Retrieve the next argument */
+                offset = i;
                 if (i < (size_t)argc) 
                 {   
                     int arg_len = strlen(argv[i]);
@@ -403,5 +412,5 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
      * and you won't be able to call flg_parse_flags again. */
     _flg_free_mem();
 
-    return i; /* return the offset */
+    return offset; /* return the offset */
 }
