@@ -50,7 +50,10 @@ typedef struct {
 
 _flg_rest_collection *_flg_rest_col = NULL;
 
-void flg_define_rest_collection(const char *name, unsigned short minimum, const char *help_str)
+void flg_define_rest_collection(
+    const char *name, 
+    unsigned short minimum, 
+    const char *help_str)
 {
     if (_flg_rest_col != NULL)
     {
@@ -511,9 +514,10 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     break_outer: /* exit from loop */
 
     /* Check whether we have the minimum of rest items in our collection */
-    if (_flg_rest_col->minimum_amount > (argc - (offset + 1)) 
-        && !*print_usage /* Except --help, we always want the help print
-                          * to work without extra args */
+    if (_flg_rest_col != NULL && 
+        _flg_rest_col->minimum_amount > (argc - (offset + 1)) && 
+        !*print_usage /* Except --help, we always want the help print
+                       * to work without extra args */
         )
     {
         fprintf(stderr, "The minimum amount of requested [%s]... "
