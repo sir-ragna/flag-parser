@@ -13,9 +13,9 @@ test: $(TARGET).c
 	rm $(TARGET).cpp
 	gcc   -Wall -Werror -std=c89 -g -o $(TARGET) $(TARGET).c  # Test c89 compat with gcc
 	clang -Wall -Werror -std=c89 -g -o $(TARGET) $(TARGET).c  # Test c89 compat with clang
-	valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=33 ./example -n 999 -z Hallo -a xzy # Test memory leaks
-	valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=33 ./example --hard -k         # Test memory leaks
 	valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=33 ./example --help
+	valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=33 ./example --keep
+	valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=33 ./example --dns 8.8.8.8
 
 
 debug: $(TARGET).c
