@@ -315,7 +315,7 @@ flg_string_arg(
     str_flag.default_value  = _flg_duplicate_str(default_value);
 
     str_flag.value = value;
-    *str_flag.value = NULL; /* _flg_duplicate_str(default_value); */
+    *str_flag.value = _flg_duplicate_str(default_value);
 
     _flg_sflagsc++;
     _flg_sflags = (_flg_str_flag *) realloc(
