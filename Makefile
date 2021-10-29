@@ -19,10 +19,10 @@ test: $(TARGET).c
 
 
 debug: $(TARGET).c
-	$(CC) -g -Wall -o $(TARGET) $(TARGET).c
+	$(CC) $(CFLAGS) -g -o $(TARGET) $(TARGET).c
 
 release: $(TARGET).c
-	$(CC) -O2 -Wall -o $(TARGET) $(TARGET).c
+	$(CC) $(CFLAGS) -O2 -o $(TARGET) $(TARGET).c
 
 $(TARGET): $(TARGET).c
 	$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).c
