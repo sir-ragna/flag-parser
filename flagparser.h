@@ -92,6 +92,7 @@ void flg_define_rest_collection(
 
 void flg_print_usage(const char *filename)
 {
+    /* Print help for rest collection, if we have one */
     if (_flg_rest_col && _flg_rest_col->name)
     {
         fprintf(stdout, "%s [OPTIONS]... [%s]...\n", filename,  _flg_rest_col->name);
@@ -105,13 +106,16 @@ void flg_print_usage(const char *filename)
     size_t i;
     for (i = 0; i < _flg_sflagsc; i++) /* Print the str flags help */
     {
+        if (_flg_sflags[i].flag)
+            fprintf(stdout, "    %s <string>\n", _flg_sflags[i].flag);
+        if (_flg_sflags[i].long_form_flag)
+            fprintf(stdout, "    %s <string>\n", _flg_sflags[i].long_form_flag);
+
         if (_flg_sflags[i].default_value == NULL)
-            fprintf(stdout, "    %s <string>\n        %s (default: NULL)\n\n", 
-                _flg_sflags[i].flag, 
+            fprintf(stdout, "        %s (default: NULL)\n\n", 
                 _flg_sflags[i].help_str);    
         else
-            fprintf(stdout, "    %s <string>\n        %s (default: \"%s\")\n\n", 
-                _flg_sflags[i].flag, 
+            fprintf(stdout, "        %s (default: \"%s\")\n\n",
                 _flg_sflags[i].help_str, 
                 _flg_sflags[i].default_value
             );
@@ -119,8 +123,12 @@ void flg_print_usage(const char *filename)
 
     for (i = 0; i < _flg_iflagsc; i++) /* Print the int flags help */
     {
-        fprintf(stdout, "    %s <n>\n        %s (default: %i)\n\n", 
-            _flg_iflags[i].flag, 
+        if (_flg_iflags[i].flag)
+            fprintf(stdout, "    %s <string>\n", _flg_iflags[i].flag);
+        if (_flg_iflags[i].long_form_flag)
+            fprintf(stdout, "    %s <string>\n", _flg_iflags[i].long_form_flag);
+        
+        fprintf(stdout, "        %s (default: %i)\n\n", 
             _flg_iflags[i].help_str, 
             _flg_iflags[i].default_value
         );
@@ -128,8 +136,12 @@ void flg_print_usage(const char *filename)
     
     for (i = 0; i < _flg_bflagsc; i++) /* Print the boolean flags help */
     {
-        fprintf(stdout, "    %s\n        %s (default: false)\n\n", 
-            _flg_bflags[i].flag, 
+        if (_flg_bflags[i].flag)
+            fprintf(stdout, "    %s <string>\n", _flg_bflags[i].flag);
+        if (_flg_bflags[i].long_form_flag)
+            fprintf(stdout, "    %s <string>\n", _flg_bflags[i].long_form_flag);
+        
+        fprintf(stdout, "        %s (default: false)\n\n", 
             _flg_bflags[i].help_str
         );
     }
