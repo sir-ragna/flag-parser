@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -std=c89
+CFLAGS = -Wall -Werror -std=c89
 TARGET = example
 
 all: $(TARGET)
