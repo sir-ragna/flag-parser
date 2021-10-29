@@ -1,4 +1,6 @@
 
+[![.github/workflows/codeql-analysis.yml](https://github.com/sir-ragna/flag-parser/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sir-ragna/flag-parser/actions/workflows/codeql-analysis.yml)
+
 # flagparser
 
 Somewhat inspired by the golang flags package. 
