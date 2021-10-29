@@ -5,10 +5,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-char * _flg_duplicate_str(const char *source);
-void _flg_free_mem();
-void flg_print_usage(const char *filename);
-
 typedef struct {
     int *value;           /* store of the actual value */
     char *flag;           /* short form name "-n"      */
@@ -16,9 +12,6 @@ typedef struct {
     int default_value;    /* default value             */
     char *help_str;       /* help string               */
 } _flg_int_flag;
-
-_flg_int_flag *_flg_iflags  = NULL;
-size_t _flg_iflagsc = 0;
 
 typedef struct {
     char **value;
@@ -28,9 +21,6 @@ typedef struct {
     char *help_str;
 } _flg_str_flag;
 
-_flg_str_flag *_flg_sflags  = NULL;
-size_t _flg_sflagsc = 0;
-
 typedef struct {
     bool *value;
     char *flag;           /* short form flag "-n"    */
@@ -38,17 +28,51 @@ typedef struct {
     char *help_str;
 } _flg_bool_flag;
 
-_flg_bool_flag *_flg_bflags = NULL;
-size_t _flg_bflagsc = 0;
-
-
 typedef struct {
     char *name;
     unsigned int minimum_amount;
     char *help_str;
 } _flg_rest_collection;
 
+/* Global objects */
+_flg_int_flag *_flg_iflags  = NULL;
+size_t _flg_iflagsc = 0;
+_flg_str_flag *_flg_sflags  = NULL;
+size_t _flg_sflagsc = 0;
+_flg_bool_flag *_flg_bflags = NULL;
+size_t _flg_bflagsc = 0;
 _flg_rest_collection *_flg_rest_col = NULL;
+
+/* Functions */
+unsigned int flg_parse_flags(const int argc, const char *argv[]);
+void flg_print_usage(const char *filename /* argv[0] */);
+void flg_define_rest_collection(
+    const char *name,       /* Name of the strings after [OPTIONS]... */
+    unsigned short minimum, /* Minimum required amount */
+    const char *help_str    /* Help string */
+);
+bool _flg_check_existence(const char *flag, const char *long_form_flag);
+void _flg_validate_flag_definition(const char *flag, const char *long_form_flag);
+char * _flg_duplicate_str(const char *source); /* Allocate and copy */
+void _flg_free_mem(); /* Free the global objects */
+void _flg_free_bflag(_flg_bool_flag *bool_flag);
+void _flg_free_iflag(_flg_int_flag *int_flag);
+void _flg_free_sflag(_flg_str_flag *str_flag);
+bool * flg_bool_arg(
+    const char *flag,           /* -f */
+    const char *long_form_flag, /* --flag */
+    const char *help_str        /* Enables flag */
+);
+char ** flg_string_arg(
+    const char *flag, 
+    const char *long_form_flag, 
+    const char *default_value, 
+    const char *help_str
+);
+void _flg_validate_flag_definition(
+    const char *flag,          /* -f */
+    const char *long_form_flag /* --flag */
+);
 
 void flg_define_rest_collection(
     const char *name, 
@@ -111,26 +135,26 @@ void flg_print_usage(const char *filename)
     }
 }
 
-void _flg_free_bflag(_flg_bool_flag *bf)
+void _flg_free_bflag(_flg_bool_flag *bool_flag)
 {
-    /* We don't free bf->value on purpose
+    /* We don't free bool_flag->value on purpose
      * that pointer has been given back to the caller
      * The caller might still use it and will be responsible
      * to free it themselves. */
-    if (bf->flag != NULL)
+    if (bool_flag->flag != NULL)
     {
-        free(bf->flag);
-        bf->flag = NULL;
+        free(bool_flag->flag);
+        bool_flag->flag = NULL;
     }
-    if (bf->long_form_flag != NULL)
+    if (bool_flag->long_form_flag != NULL)
     {
-        free(bf->long_form_flag);
-        bf->long_form_flag = NULL;
+        free(bool_flag->long_form_flag);
+        bool_flag->long_form_flag = NULL;
     }
-    if (bf->help_str != NULL)
+    if (bool_flag->help_str != NULL)
     {
-        free(bf->help_str);
-        bf->help_str = NULL;
+        free(bool_flag->help_str);
+        bool_flag->help_str = NULL;
     }
 }
 
@@ -157,6 +181,30 @@ void _flg_free_iflag(_flg_int_flag *int_flag)
     }
 }
 
+void _flg_free_sflag(_flg_str_flag *str_flag)
+{
+    if (str_flag->default_value != NULL)
+    {
+        free(str_flag->default_value);
+        str_flag->default_value = NULL;
+    }        
+    if (str_flag->help_str != NULL)
+    {
+        free(str_flag->help_str);
+        str_flag->help_str = NULL;
+    }
+    if (str_flag->flag != NULL)
+    {
+        free(str_flag->flag);
+        str_flag->flag = NULL;
+    }
+    if (str_flag->long_form_flag != NULL)
+    {
+        free(str_flag->long_form_flag);
+        str_flag->long_form_flag = NULL;
+    }
+}
+
 
 void _flg_free_mem()
 {
@@ -164,9 +212,10 @@ void _flg_free_mem()
     /* Clean up boolean flags */
     for (i = 0; i < _flg_bflagsc; i++)
     {
-        _flg_free_bflag(&_flg_bflags[i]);
+        _flg_free_bflag(&_flg_bflags[i]); /* Free the object ptrs */
     }
-    if (_flg_bflags != NULL)
+
+    if (_flg_bflags != NULL) /* Free the object storage itself */
     {
         free(_flg_bflags);
         _flg_bflags = NULL;
@@ -189,26 +238,7 @@ void _flg_free_mem()
     /* Clean up str flags */
     for (i = 0; i < _flg_sflagsc; i++)
     {
-        if (_flg_sflags[i].default_value != NULL)
-        {
-            free(_flg_sflags[i].default_value);
-            _flg_sflags[i].default_value = NULL;
-        }        
-        if (_flg_sflags[i].help_str != NULL)
-        {
-            free(_flg_sflags[i].help_str);
-            _flg_sflags[i].help_str = NULL;
-        }
-        if (_flg_sflags[i].flag != NULL)
-        {
-            free(_flg_sflags[i].flag);
-            _flg_sflags[i].flag = NULL;
-        }
-        if (_flg_sflags[i].long_form_flag != NULL)
-        {
-            free(_flg_sflags[i].long_form_flag);
-            _flg_sflags[i].long_form_flag = NULL;
-        }
+        _flg_free_sflag(&_flg_sflags[i]);
     }
     
     if (_flg_sflags != NULL)
@@ -560,3 +590,16 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
 
     return offset + 1; /* return index+1 of the last found flag */
 }
+
+/* 
+    The MIT License (MIT)
+    =====================
+    
+    Copyright © 2021 Robbe Van der Gucht
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
