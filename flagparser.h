@@ -278,6 +278,33 @@ void _flg_free_mem()
     }
 }
 
+/* Cleaning up the flags is the responsibility of the caller,
+ * except when we decide to exit. Then it is our responsibility
+ * again */
+void _flg_free_flags()
+{
+    size_t i;
+    for (i = 0; i < _flg_sflagsc; i++)
+    {   /* De-alloc the strings that are otherwise the
+        * caller's responsibility. Because we are exiting early
+        * we need to free them ourselves. */
+        free(*_flg_sflags[i].value);
+        *_flg_sflags[i].value = NULL;
+        free(_flg_sflags[i].value);
+        _flg_sflags[i].value = NULL;
+    }
+    for (i = 0; i < _flg_bflagsc; i++) /* same for bool flags */
+    {
+        free(_flg_bflags[i].value);
+        _flg_bflags[i].value = NULL;
+    }
+    for (i = 0; i < _flg_iflagsc; i++) /* same for int flags */
+    {
+        free(_flg_iflags[i].value);
+        _flg_iflags[i].value = NULL;
+    }
+}
+
 char * _flg_duplicate_str(const char *source)
 {
     if (source == NULL)
@@ -564,31 +591,15 @@ unsigned int flg_parse_flags(const int argc, const char *argv[])
     {
         fprintf(stderr, "The minimum amount of requested [%s]... "
             "args was not found\n", _flg_rest_col->name);
+        _flg_free_flags();
+        _flg_free_mem();
         exit(7);
     }
 
     if (*print_usage)
     {
         flg_print_usage(argv[0]);
-        for (i = 0; i < _flg_sflagsc; i++)
-        {   /* De-alloc the strings that are otherwise the
-            * caller's responsibility. Because we are exiting early
-            * we need to free them ourselves. */
-            free(*_flg_sflags[i].value);
-            *_flg_sflags[i].value = NULL;
-            free(_flg_sflags[i].value);
-            _flg_sflags[i].value = NULL;
-        }
-        for (i = 0; i < _flg_bflagsc; i++) /* same for bool flags */
-        {
-            free(_flg_bflags[i].value);
-            _flg_bflags[i].value = NULL;
-        }
-        for (i = 0; i < _flg_iflagsc; i++) /* same for int flags */
-        {
-            free(_flg_iflags[i].value);
-            _flg_iflags[i].value = NULL;
-        }
+        _flg_free_flags(); /* Normally caller responsibility */
         _flg_free_mem(); /* Do regular clean-up before exit */
         exit(exit_code);
     }
