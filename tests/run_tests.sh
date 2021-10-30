@@ -38,7 +38,8 @@ compile_and_assert()
     ALL_ARGS="$@"
     EXPECTED_CODE=$1
     TARGET=$2
-    ARGS=("${ALL_ARGS[@]:2}") # alternatively use 'shift'
+    shift ; shift
+    #ARGS=("${ALL_ARGS[@]:2}") # alternatively use 'shift'
     # ^ from: https://stackoverflow.com/questions/10569198/take-the-first-command-line-argument-and-pass-the-rest#10569248
 
     # Compile the target with error!
@@ -49,6 +50,7 @@ compile_and_assert()
     fi
 
     # Execute the target, hide the output
+    #echo "./${TARGET}" "$@"
     "./${TARGET}" "$@" >/dev/null 2>/dev/null
     ERR="$?"
     rm "${TARGET}" # remove the target
@@ -67,9 +69,13 @@ compile_and_assert 4 null_define_bool
 compile_and_assert 4 null_define_string
 compile_and_assert 4 null_define_int
 compile_and_assert 1 repeated_parse_flags
-compile_and_assert 0 define_rest_collection
+compile_and_assert 0 rest_col_nomin
+compile_and_assert 0 rest_col_min test
+
+# didn't provide the minimum rest params
+compile_and_assert 7 rest_col_min
 
 make all >/dev/null
-check_memory_leaks define_rest_collection test
-check_memory_leaks define_rest_collection abc xyz 1234
+check_memory_leaks rest_col_nomin test
+check_memory_leaks rest_col_nomin abc xyz 1234
 
